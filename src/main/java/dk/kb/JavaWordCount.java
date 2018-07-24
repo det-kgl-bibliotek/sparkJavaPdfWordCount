@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 
 public class JavaWordCount {
     
-    private static final Pattern SPACE = Pattern.compile(" ");
+    private static final Pattern SPACE = Pattern.compile("\\s+");
     
     
     public static void main(String[] args) throws Exception {
@@ -45,6 +45,7 @@ public class JavaWordCount {
             public Iterator<String> call(Tuple2<String, PortableDataStream> tuple)
                     throws Exception {
                 try (PDDocument document = PDDocument.load(tuple._2.open())) {
+                    //        Example pdf operation
                     PDFTextStripperByArea stripper = new PDFTextStripperByArea();
                     stripper.setSortByPosition(true);
                     Rectangle rect = new Rectangle(10, 280, 275, 60);
@@ -67,8 +68,8 @@ public class JavaWordCount {
         //Create pairs of word,1
         JavaPairRDD<String, Integer> ones = words.mapToPair(new PairFunction<String, String, Integer>() {
             @Override
-            public Tuple2<String, Integer> call(String s) {
-                return new Tuple2<String, Integer>(s, 1);
+            public Tuple2<String, Integer> call(String word) {
+                return new Tuple2<String, Integer>(word.trim(), 1);
             }
         });
 
@@ -85,7 +86,7 @@ public class JavaWordCount {
         
         //Now that output is local, we can iterate through it as normal
         for (Tuple2<?, ?> tuple : output) {
-            System.out.println(tuple._1() + ": " + tuple._2());
+            System.out.println("'"+tuple._1() + "' : '" + tuple._2()+"'");
         }
         ctx.stop();
     }
