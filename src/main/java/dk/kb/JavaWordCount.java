@@ -37,20 +37,12 @@ public class JavaWordCount {
         
         SparkConf sparkConf = new SparkConf().setAppName("JavaWordCount");
         
-        //These apparently only function when we use master=yarn property
-        //These properties can be set in a config file or as command line params,
-        // or in the code, as seen here
-        sparkConf.setSparkHome("/usr/hdp/current/spark2-client");
-        //Hver executor skal have 21GB RAM
-        sparkConf.set("spark.executor.memory", "21G");
-        //Og bruge 4 kerner
-        sparkConf.set("spark.executor.cores", "4");
-        //Vi kan max have 26 executors
-        sparkConf.set("spark.dynamicAllocation.maxExecutors", "26");
-        //Og min 1 executor
-        sparkConf.set("spark.dynamicAllocation.minExecutors", "1");
-        //Og vi starter med 1
-        sparkConf.set("spark.dynamicAllocation.initialExecutors", "1");
+        //Configure how many resources we need from the cluster
+        configureResourceAllocation(sparkConf);
+    
+    
+        //Of of the many ways to reduce spark logging
+        //LogManager.getLogger("org").setLevel(Level.WARN);
         
         try (JavaSparkContext ctx = new JavaSparkContext(sparkConf)) {
     
