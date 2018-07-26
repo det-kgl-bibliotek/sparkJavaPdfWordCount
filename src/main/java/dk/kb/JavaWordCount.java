@@ -14,7 +14,9 @@ import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -83,8 +85,15 @@ public class JavaWordCount {
 
         //Retrieve the data from cluster to local memory
         List<Tuple2<String, Integer>> output = counts.collect();
+        //Now that output is local, we can work on it as we normally would
         
-        //Now that output is local, we can iterate through it as normal
+        //Wrap output in a normal arraylist, so we can sort it. The collected list is immutable, so sort fails
+        output = new ArrayList<>(output);
+        
+        //First we sort it
+        output.sort(Comparator.comparing(Tuple2::_2));
+        
+        // Then we print it
         for (Tuple2<?, ?> tuple : output) {
             System.out.println("'"+tuple._1() + "' : '" + tuple._2()+"'");
         }
