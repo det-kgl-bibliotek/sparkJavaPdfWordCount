@@ -36,6 +36,7 @@ public class JavaWordCount {
         
         SparkConf sparkConf = new SparkConf().setAppName("JavaWordCount");
         
+        //These apparently only function when we use master=yarn property
         //These properties can be set in a config file or as command line params,
         // or in the code, as seen here
         sparkConf.setSparkHome("/usr/hdp/current/spark2-client");
