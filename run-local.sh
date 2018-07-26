@@ -5,7 +5,7 @@ set -x
 #mvn package
 
 #Submit the job
-mvn exec:java \
+mvn compile exec:java \
     -Dexec.classpathScope="compile" \
     -Dexec.cleanupDaemonThreads="false" \
     -Dexec.mainClass="dk.kb.JavaWordCount" \
