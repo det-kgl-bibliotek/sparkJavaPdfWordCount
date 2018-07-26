@@ -54,7 +54,8 @@ public class JavaWordCount {
                     stripper.addRegion("class1", rect);
                     PDPage firstPage = document.getPage(0);
                     stripper.extractRegions(firstPage);
-                    return Arrays.asList(stripper.getTextForRegion("class1")).iterator();
+                    String text = stripper.getTextForRegion("class1");
+                    return Arrays.asList(text).iterator();
                 }
             }
         });
