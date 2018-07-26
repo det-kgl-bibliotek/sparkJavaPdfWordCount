@@ -66,9 +66,17 @@ public class JavaWordCount {
                 return Arrays.asList(SPACE.split(s)).iterator();
             }
         });
-
+        
+        //clean words
+        JavaRDD<String> cleaned_words = words.map(
+                s -> s.trim()
+                      .toLowerCase()
+                      .replaceAll("\\W", "")
+        ).filter(s -> s != null && !s.isEmpty());
+        
+        
         //Create pairs of word,1
-        JavaPairRDD<String, Integer> ones = words.mapToPair(new PairFunction<String, String, Integer>() {
+        JavaPairRDD<String, Integer> ones = cleaned_words.mapToPair(new PairFunction<String, String, Integer>() {
             @Override
             public Tuple2<String, Integer> call(String word) {
                 return new Tuple2<String, Integer>(word.trim(), 1);
