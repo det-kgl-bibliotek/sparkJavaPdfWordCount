@@ -53,9 +53,15 @@
 
     <dependencies>
         <dependency>
+            <!--Version number here is a combined thing-->
+            <!--Spark version 2.1.1-->
+            <!--Hortonworks version 2.6.1.0, as seen in http://kac-abri-001.kac.sblokalnet:8080/#/main/admin/stack/versions -->
+            <!-- artifact version 219-->
+            <!--https://mvnrepository.com/artifact/org.apache.spark/spark-core_2.11/2.1.1.2.6.1.0-129-->
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
             <version>2.1.1.2.6.1.0-129</version>
+            <!--Spark is already on the system, do NOT bundle it-->
             <scope>provided</scope>
         </dependency>
 
@@ -100,6 +106,7 @@
                 </executions>
             </plugin>
             <plugin>
+                <!--You do not NEED to use a uberjar, but it is the easiest way-->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.1.1</version>
@@ -111,11 +118,12 @@
                         </goals>
                         <configuration>
                             <minimizeJar>true</minimizeJar>
-                            <createDependencyReducedPom>true</createDependencyReducedPom>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
+
                                     <excludes>
+                                        <!--Exclude cryptographic signatures as these cause problems with uber jar-->
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
