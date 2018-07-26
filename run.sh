@@ -2,7 +2,7 @@
 set -e
 set -x
 
-mvn clean package -Phortonworks -Psbforge-nexus
+mvn clean package
 
 scp target/spark-pdf-example-1.0-SNAPSHOT.jar $USER@kac-proj-000:.
 
