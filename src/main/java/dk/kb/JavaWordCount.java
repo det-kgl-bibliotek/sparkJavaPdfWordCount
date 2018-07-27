@@ -14,6 +14,7 @@ import org.apache.spark.input.PortableDataStream;
 import scala.Tuple2;
 
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -27,22 +28,72 @@ public class JavaWordCount {
     
     
     public static void main(String[] args) throws Exception {
-
+        
         if (args.length < 1) {
             System.err.println("Usage: JavaWordCount <path>");
             System.exit(1);
         }
-
-        SparkConf sparkConf = new SparkConf().setAppName("JavaWordCount");
-        JavaSparkContext ctx = new JavaSparkContext(sparkConf);
         
-        //Read all files in dir
-        JavaPairRDD<String, PortableDataStream> pdfFiles = ctx.binaryFiles(args[0]);
+        
+        SparkConf sparkConf = new SparkConf().setAppName("JavaWordCount");
+        
+        //Configure how many resources we need from the cluster
+        configureResourceAllocation(sparkConf);
     
     
+        //Of of the many ways to reduce spark logging
+        //LogManager.getLogger("org").setLevel(Level.WARN);
+        
+        try (JavaSparkContext ctx = new JavaSparkContext(sparkConf)) {
+    
+    
+            //Read all files in dir
+            JavaPairRDD<String, PortableDataStream> pdfFiles = ctx.binaryFiles(args[0]);
+            
+            //Extract text from pdf files
+            JavaRDD<String> texts = pdf2Text(pdfFiles);
+    
+            //Perform the word count
+            JavaPairRDD<String, Integer> counts = wordCount(texts);
+        
+            //Retrieve the data from cluster to local memory
+            List<Tuple2<String, Integer>> output = counts.collect();
+            //Now that output is local, we can work on it as we normally would
+    
+            //Wrap output in a normal arraylist, so we can sort it. The collected list is immutable, so sort fails
+            output = new ArrayList<>(output);
+    
+            //First we sort it
+            output.sort(Comparator.comparing(Tuple2::_2));
+    
+            // Then we print it
+            for (Tuple2<?, ?> tuple : output) {
+                System.out.println("'" + tuple._1() + "' : '" + tuple._2() + "'");
+            }
+        }
+    }
+    
+    private static void configureResourceAllocation(SparkConf sparkConf) {
+        //These apparently only function when we use master=yarn property
+        //These properties can be set in a config file or as command line params,
+        // or in the code, as seen here
+        
+        //Hver executor skal have 21GB RAM
+        sparkConf.set("spark.executor.memory", "21G");
+        //Og bruge 4 kerner
+        sparkConf.set("spark.executor.cores", "4");
+        //Vi kan max have 26 executors
+        sparkConf.set("spark.dynamicAllocation.maxExecutors", "26");
+        //Og min 1 executor
+        sparkConf.set("spark.dynamicAllocation.minExecutors", "0");
+        //Og vi starter med 1
+        sparkConf.set("spark.dynamicAllocation.initialExecutors", "1");
+    }
+    
+    protected static JavaRDD<String> pdf2Text(JavaPairRDD<String, PortableDataStream> pdfFiles) throws IOException {
         //Here we extract a region of text from each file
         //Flatmap, as we do want a simple RDD of text, not a nested structure
-        JavaRDD<String> texts = pdfFiles.flatMap(new FlatMapFunction<Tuple2<String, PortableDataStream>, String>() {
+        return pdfFiles.flatMap(new FlatMapFunction<Tuple2<String, PortableDataStream>, String>() {
             @Override
             public Iterator<String> call(Tuple2<String, PortableDataStream> tuple)
                     throws Exception {
@@ -59,7 +110,9 @@ public class JavaWordCount {
                 }
             }
         });
-
+    }
+    
+    protected static JavaPairRDD<String, Integer> wordCount(JavaRDD<String> texts) {
         //Split all text on space
         JavaRDD<String> words = texts.flatMap(new FlatMapFunction<String, String>() {
             @Override
@@ -67,37 +120,29 @@ public class JavaWordCount {
                 return Arrays.asList(SPACE.split(s)).iterator();
             }
         });
-
+        
+        //clean words
+        JavaRDD<String> cleaned_words = words.map(
+                s -> s.trim()
+                      .toLowerCase()
+                      .replaceAll("\\W", "")
+        ).filter(s -> s != null && !s.isEmpty());
+        
+        
         //Create pairs of word,1
-        JavaPairRDD<String, Integer> ones = words.mapToPair(new PairFunction<String, String, Integer>() {
+        JavaPairRDD<String, Integer> ones = cleaned_words.mapToPair(new PairFunction<String, String, Integer>() {
             @Override
             public Tuple2<String, Integer> call(String word) {
                 return new Tuple2<String, Integer>(word.trim(), 1);
             }
         });
-
+        
         //Group on identical words and sum the integers
-        JavaPairRDD<String, Integer> counts = ones.reduceByKey(new Function2<Integer, Integer, Integer>() {
+        return ones.reduceByKey(new Function2<Integer, Integer, Integer>() {
             @Override
             public Integer call(Integer i1, Integer i2) {
                 return i1 + i2;
             }
         });
-
-        //Retrieve the data from cluster to local memory
-        List<Tuple2<String, Integer>> output = counts.collect();
-        //Now that output is local, we can work on it as we normally would
-        
-        //Wrap output in a normal arraylist, so we can sort it. The collected list is immutable, so sort fails
-        output = new ArrayList<>(output);
-        
-        //First we sort it
-        output.sort(Comparator.comparing(Tuple2::_2));
-        
-        // Then we print it
-        for (Tuple2<?, ?> tuple : output) {
-            System.out.println("'"+tuple._1() + "' : '" + tuple._2()+"'");
-        }
-        ctx.stop();
     }
 }
