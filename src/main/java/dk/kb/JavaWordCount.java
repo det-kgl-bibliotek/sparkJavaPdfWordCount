@@ -78,12 +78,12 @@ public class JavaWordCount {
         //These properties can be set in a config file or as command line params,
         // or in the code, as seen here
         
-        //Hver executor skal have 21GB RAM
+        //Hver executor skal have 21GB RAM. Set ned til 2G hvis du skal køre test
         sparkConf.set("spark.executor.memory", "21G");
-        //Og bruge 4 kerner
+        //Og bruge 4 kerner. Sæt ned til 1 hvis du skal køre test.
         sparkConf.set("spark.executor.cores", "4");
         //Vi kan max have 26 executors
-        sparkConf.set("spark.dynamicAllocation.maxExecutors", "26");
+        sparkConf.set("spark.dynamicAllocation.maxExecutors", "26"); 
         //Og min 1 executor
         sparkConf.set("spark.dynamicAllocation.minExecutors", "0");
         //Og vi starter med 1
