@@ -73,21 +73,33 @@ public class JavaWordCount {
         }
     }
     
-    private static void configureResourceAllocation(SparkConf sparkConf) {
+    /**
+     * Set Spark configuration
+     * This can also be done from on the command line and through a properties file.
+     * @param sparkConf The spark configuration object to configure
+     * @return the configured sparkConf object, in case you need it...
+     */
+    protected static SparkConf configureResourceAllocation(SparkConf sparkConf) {
         //These apparently only function when we use master=yarn property
         //These properties can be set in a config file or as command line params,
         // or in the code, as seen here
         
-        //Hver executor skal have 21GB RAM. Set ned til 2G hvis du skal køre test
-        sparkConf.set("spark.executor.memory", "21G");
-        //Og bruge 4 kerner. Sæt ned til 1 hvis du skal køre test.
-        sparkConf.set("spark.executor.cores", "4");
+        //Hver executor skal have 25GB RAM (default setting for KAC)
+        // Set ned til 2G hvis du skal køre test
+        //sparkConf.set("spark.executor.memory", "2G");
+        
+        //Og hver executor skal bruge 4 kerner (default).
+        //Sæt ned til 1 hvis du skal køre test.
+        //sparkConf.set("spark.executor.cores", "1");
+        
         //Vi kan max have 26 executors
-        sparkConf.set("spark.dynamicAllocation.maxExecutors", "26"); 
+        sparkConf.set("spark.dynamicAllocation.maxExecutors", "26");
         //Og min 1 executor
         sparkConf.set("spark.dynamicAllocation.minExecutors", "0");
         //Og vi starter med 1
-        sparkConf.set("spark.dynamicAllocation.initialExecutors", "1");
+        sparkConf.set("spark.dynamicAllocation.initialExecutors", "3");
+        
+        return sparkConf;
     }
     
     protected static JavaRDD<String> pdf2Text(JavaPairRDD<String, PortableDataStream> pdfFiles) throws IOException {

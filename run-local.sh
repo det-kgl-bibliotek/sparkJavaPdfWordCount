@@ -4,6 +4,8 @@ set -x
 
 #mvn package
 
+# Use -DSpark.master=local[K]	to run locally with K cores
+
 #Submit the job
 mvn compile exec:java \
     -Dexec.classpathScope="compile" \
